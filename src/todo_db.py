@@ -34,10 +34,28 @@ CREATE TABLE IF NOT EXISTS tarefas (
 def add_pagina(titulo, tipo):
     cursor.execute("INSERT INTO paginas (titulo, tipo) VALUES (?, ?)", (titulo, tipo))
     conn.commit()
-
 def add_tarefa(titulo, descricao, prioridade, data_cri, data_term, id_pag):
     cursor.execute("INSERT INTO tarefas (titulo, descricao, categoria, prioridade, data_de_criacao, data_de_termino, id_pagina) VALUES (?, ?, ?, ?, ?, ?))", (titulo, descricao, prioridade, data_cri, data_term, id_pag))
     conn.commit()
 
-add_pagina("teste", "tarefas")
 
+def delete_pagina(id):
+    cursor.execute("DELETE FROM paginas WHERE id_pagina = ?", (id))
+    conn.commit()
+def delete_tarefa(id):
+    cursor.execute("DELETE FROM tarefas WHERE id_tarefa = ?", (id))
+    conn.commit()
+
+
+def get_paginas():
+    cursor.execute("SELECT * FROM paginas")
+    return cursor.fetchall()
+def get_tarefas():
+    cursor.execute("SELECT * FROM tarefas")
+    return cursor.fetchall()
+
+# add_pagina("teste", "tarefas")
+
+cursor.execute("SELECT * FROM paginas")
+result = cursor.fetchall()
+print(result)

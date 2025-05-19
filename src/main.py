@@ -10,6 +10,6 @@ def main(page: ft.Page):
     app = TodoApp(page)
 
     page.add(app)
-    page.on_resize = app.resize_update
+    page.on_resize = app.update()
 
 ft.app(target=main)

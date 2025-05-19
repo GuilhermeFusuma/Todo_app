@@ -3,8 +3,10 @@ from cores import cores
 from componentes import *
 
 class LeftMenu(ft.Container):
-    def __init__(self, page):
+    def __init__(self, page, app: ft.Row):
         super().__init__()
+        self.app = app
+
         # Configurações do container
         self.padding = 5
         self.bgcolor = cores["bg2"]
@@ -16,6 +18,7 @@ class LeftMenu(ft.Container):
 
         # Conteúdo do container
         self.arrow = ArrowButton(self.toggle_menu)
+        self.arrow.rotate = 3.14 # rotaciona 1 radiano
 
         self.content= ft.Column(
             controls=[
@@ -42,8 +45,8 @@ class LeftMenu(ft.Container):
 
     # Modifica o estado do menu à esquerda entre minimizado e normal
     def toggle_menu(self, e):
-        if not self.mini: # Caso não esteja minimizada
-            self.arrow.rotate = 3.14 # Rotaciona um radiano
+        if not self.mini: # minimizar
+            self.arrow.rotate = 0
             self.content = ft.Column(
                 controls=[
                     self.arrow
@@ -51,12 +54,12 @@ class LeftMenu(ft.Container):
                 height=self.height
             )
             self.width = 50
-            self.alignment = ft.Alignment(0.0, 0.0)
+            self.alignment = ft.alignment.center
 
             self.mini = True 
         elif self.mini: # Caso esteja minimizada
             self.width = 300
-            self.arrow.rotate = 0
+            self.arrow.rotate = 3.14
             self.content= ft.Column(
                 controls=[
                     ft.Row(
@@ -72,66 +75,61 @@ class LeftMenu(ft.Container):
 
             self.mini = False
 
-        self.update()
+        self.app.update()
 
 class Chat_Menu(ft.Container):
-    def __init__(self, page):
+    def __init__(self, page, app: ft.Row):
         super().__init__()
+        self.app = app
         self.padding = 5
         self.mini = True
         self.width = 50
         self.bgcolor = cores["bg2"]
         self.height = page.height
+
+        # animação
+        self.animate = ft.Animation(duration=250, curve=ft.AnimationCurve.EASE_IN_OUT)
+
         self.arrow = ArrowButton(self.toggle_chat)
+        self.arrow.rotate = 3.14
 
-        self.open_width = min(300, page.width*0.3)
-
-        # Chat de conversa (ficará escondido no início)
         self.chat = Chat()
-
-        # Seta para abrir a aba
         self.content = self.arrow
         self.alignment = ft.Alignment(0.0, 0.0)
-    
+
     def toggle_chat(self, e):
-        if not self.mini: # Caso não esteja minimizada
-            self.arrow.rotate = 0 
+        if not self.mini:
+            self.arrow.rotate = 3.13
             self.content = self.arrow
             self.width = 50
-
-            self.mini = True 
-        elif self.mini: # Caso esteja minimizada
-            self.width = self.open_width
-            self.arrow.rotate = 3.14 # Rotaciona um radiano
-            self.content= ft.Column(
+            self.mini = True
+        else:
+            self.arrow.rotate = 0
+            self.content = ft.Column(
                 controls=[
-                    ft.Row(
-                        controls=[
-                            self.arrow
-                        ]
-                    ),
+                    ft.Row(controls=[self.arrow]),
                     self.chat
                 ],
-                spacing=20,
-                
+                spacing=20
             )
-
+            self.width = 280
             self.mini = False
 
-        self.update()
+        self.app.update()
+
 
 class Chat(ft.Container):
     def __init__(self):
         super().__init__()
         self.expand = True
-        self.width = 300
         self.bgcolor = cores["bg1"]
         self.padding = 5
         self.alignment = ft.Alignment(0.0, 1.0)
 
-        self.campo_mensagens = ft.Column(
+        self.campo_mensagens = ft.ListView(
             expand=True,
-            scroll=ft.ScrollMode.AUTO
+            auto_scroll=True,
+            spacing = 10
         )
         self.campo_texto = ft.TextField(on_submit=self.enviar)
 
@@ -160,7 +158,13 @@ class Chat(ft.Container):
     def enviar(self, e):
         if len(self.campo_texto.value) > 0:
             self.campo_mensagens.controls.append(
-                Balao(self.campo_texto.value)
+                ft.Row(
+                    controls=[
+                        Balao(self.campo_texto.value)
+                    ],
+                    alignment=ft.CrossAxisAlignment.END,
+                    width=200
+                )
             )
             self.campo_mensagens.update()
 
@@ -169,25 +173,51 @@ class Chat(ft.Container):
         self.campo_texto.update()
         self.campo_texto.focus()
 
+class Main_Menu(ft.Container):
+    def __init__(self, page, app: ft.Row):
+        super().__init__()
+        self.height = page.height
+
+        self.expand = True
+        self.padding = 20
+
+        self.content = ft.Column(
+            controls=[
+                ft.Row(
+                    controls=[
+                        ft.Text("Título da página", size = 35)
+                    ]
+                ),
+                ft.Container(
+                    content=ft.Column(
+                        controls=[
+                            ContainerTarefas("10/05/2025"),
+                            ContainerTarefas("14/05/2025")
+                        ],
+                    ),
+                    padding=30
+                )
+            ],
+            spacing = 15
+        )
 
 class TodoApp(ft.Row):
     def __init__(self, page):
         super().__init__()
-        self.left_menu = LeftMenu(page)
-        self.chat_menu = Chat_Menu(page)
+        # janelas
+        self.left_menu = LeftMenu(page, self)
+        self.chat_menu = Chat_Menu(page, self)
+        self.main_menu = Main_Menu(page, self)
+
+        #config
+        self.spacing = 0
+        self.expand = True
 
         self.controls = [
             self.left_menu,
-            ft.Container(
-                width=page.width/2 - (self.left_menu.width + self.chat_menu.width),
-                height=page.height,
-                bgcolor="FF0000",
-                content=ft.Text("teste")
-            ),
+            self.main_menu,
             self.chat_menu
         ]
-
-        print(self.controls)
 
     #TODO: corrigir essa função que não funciona
     def resize_update(self, e):

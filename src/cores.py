@@ -1,5 +1,7 @@
 cores = {
     "bg1": "#020C24",
     "bg2": "#1D1A3D",
-    "fore1": "#FFF2C0"
+    "bg_tarefa": "#369747FF",
+    "fore1": "#FFF2C0",
+    "fore2": "#9747FF"
 }

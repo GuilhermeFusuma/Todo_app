@@ -38,14 +38,12 @@ def add_tarefa(titulo, descricao, prioridade, data_cri, data_term, id_pag):
     cursor.execute("INSERT INTO tarefas (titulo, descricao, categoria, prioridade, data_de_criacao, data_de_termino, id_pagina) VALUES (?, ?, ?, ?, ?, ?))", (titulo, descricao, prioridade, data_cri, data_term, id_pag))
     conn.commit()
 
-
 def delete_pagina(id):
     cursor.execute("DELETE FROM paginas WHERE id_pagina = ?", (id))
     conn.commit()
 def delete_tarefa(id):
     cursor.execute("DELETE FROM tarefas WHERE id_tarefa = ?", (id))
     conn.commit()
-
 
 def get_paginas():
     cursor.execute("SELECT * FROM paginas")
@@ -54,8 +52,16 @@ def get_tarefas():
     cursor.execute("SELECT * FROM tarefas")
     return cursor.fetchall()
 
-# add_pagina("teste", "tarefas")
+def get_pagina_id(id):
+    cursor.execute("SELECT * from paginas WHERE id_pagina = ?", (id))
+    return cursor.fetchall()
+def get_tarefa_id(id):
+    cusor.execute("SELECT * FROM tarefas WHERE id_tarefa = ?", (id))
+    return cursor.fetchall()
 
-cursor.execute("SELECT * FROM paginas")
-result = cursor.fetchall()
-print(result)
+def edit_pagina(id, titulo, tipo):
+    cursor.execute("UPDATE paginas SET titulo = ?, tipo = ? WHERE id_pagina = ?", (titulo, tipo, id))
+    conn.commit()
+def edit_tarefa(id, titulo, descricao, prioridade, data_term):
+    cursor.execute("UPDATE tarefas SET titulo = ?, descricao = ?, prioridade = ?, data_termino = ? WHERE id_tarefa = ?", (titulo, descricao, prioridade, data_term, id))
+    conn.commit()

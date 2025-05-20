@@ -24,10 +24,21 @@ CREATE TABLE IF NOT EXISTS tarefas (
     prioridade INTEGER,
     data_de_criacao TEXT,
     data_de_termino TEXT,
+    finalizado INTEGER,
     id_pagina INTEGER,
     FOREIGN KEY(id_pagina) REFERENCES paginas(id_pagina)
 )
 """)
+
+cursor.execute("SELECT * FROM paginas")
+result = cursor.fetchall()
+if not len(result):
+    cursor.execute("""
+    INSERT INTO paginas (titulo, tipo) VALUES ("Lista de tarefas (teste base)", "tarefa")
+    """)
+
+# cursor.execute("SELECT * FROM paginas")
+# print(cursor.fetchall())
 
 #-------------- funções para interagir com o banco de dados----------------------
 
@@ -45,11 +56,12 @@ def delete_tarefa(id):
     cursor.execute("DELETE FROM tarefas WHERE id_tarefa = ?", (id))
     conn.commit()
 
+
 def get_paginas():
     cursor.execute("SELECT * FROM paginas")
     return cursor.fetchall()
-def get_tarefas():
-    cursor.execute("SELECT * FROM tarefas")
+def get_tarefas(id_pagina):
+    cursor.execute("SELECT * FROM tarefas WHERE id_pagina = ?", (id_pagina)) 
     return cursor.fetchall()
 
 def get_pagina_id(id):
@@ -58,6 +70,7 @@ def get_pagina_id(id):
 def get_tarefa_id(id):
     cusor.execute("SELECT * FROM tarefas WHERE id_tarefa = ?", (id))
     return cursor.fetchall()
+
 
 def edit_pagina(id, titulo, tipo):
     cursor.execute("UPDATE paginas SET titulo = ?, tipo = ? WHERE id_pagina = ?", (titulo, tipo, id))

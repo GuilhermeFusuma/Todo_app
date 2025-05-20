@@ -33,30 +33,52 @@ class Balao(ft.Container):
         return linhas
 
 class Tarefa(ft.Container):
-    def __init__(self, id_tarefa, desc="", data_term=""):
+    def __init__(self, id_tarefa, titulo, data_cri, desc="", categoria="", prioridade=0, data_term=""):
         super().__init__()
         self.id = id_tarefa
-
-        # detalhes = 
+        self.titulo = titulo
+        self.desc = desc
+        self.categoria = categoria
+        self.prioridade = prioridade
+        self.data_criacao = data_cri
+        self.data_termino = data_term
 
         self.padding = 20
         self.width = float("inf")
+        self.border_radius = 10
         self.bgcolor = cores["bg_tarefa"]
+        self.ink = False
 
-        self.content = ft.Text("isso é um teste")
+        self.content = ft.Row(
+            controls=[
+                ft.Checkbox(label=self.titulo),
+                ft.Text(self.categoria)
+            ]
+        )
+
+        def hover(e):
+            self.bgcolor = cores["bg_tarefa_hover"] if e.data == "true" else cores["bg_tarefa"]
+            self.update()
+        
+        self.on_hover = hover
+
 
 # class TarefaDetalhes(ft.Container):
 #     def __init__(self, )
 
 class ContainerTarefas(ft.Container):
-    def __init__(self, data, dados="todo"):
+
+    def __init__(self, data, dados: list):
         #TODO pensar em uma forma de pegar os dados de uma forma que eu possa separar de forma eficiente 
         super().__init__()
         self.data = data
 
+        self.dados = dados
+        self.tarefas = ft.Column(expand=True)
+
         # Config
         self.padding = 15
-        self.expand = True
+        
         
         self.aberto = False
         self.arrow = ArrowButton(self.expandir)
@@ -73,10 +95,19 @@ class ContainerTarefas(ft.Container):
             border=ft.border.only(bottom=ft.border.BorderSide(1, cores["fore2"]))
         )
 
-        self.tarefas = [
-            Tarefa(1),
-            Tarefa(2)
-        ]
+        # Adiciona as tarefas em classes no self.tarefas
+        for tarefa in self.dados:
+            self.tarefas.controls.append(
+                Tarefa(
+                    tarefa['id'],
+                    tarefa['titulo'],
+                    tarefa['data_de_criacao'],
+                    tarefa['descricao'],
+                    tarefa['categoria'],
+                    tarefa['prioridade'],
+                    tarefa['data_de_termino']
+                )
+            )
 
         self.content = ft.Column(
             controls=[
@@ -87,7 +118,7 @@ class ContainerTarefas(ft.Container):
 
     def expandir(self, e):
         if not self.aberto:
-            for tarefa in self.tarefas:
+            for tarefa in self.tarefas.controls:
                 self.content.controls.append(tarefa)
             self.arrow.rotate = 3.14/2 # Rotaciona para baixo
             self.aberto = True
@@ -99,3 +130,22 @@ class ContainerTarefas(ft.Container):
             self.arrow.rotate = 0
 
         self.update()
+
+class BotaoPagina(ft.Container):
+    def __init__(self, fn, titulo):
+        super().__init__()
+        self.on_click = fn
+
+        self.bg_color = "#00000000"
+        self.width = float("inf")
+        self.padding = 5
+        self.border_radius = 5
+        self.margin = 10
+
+        self.content = ft.Text(titulo)
+
+        def on_hover(e):
+            self.bgcolor = cores["bg_tarefa"] if e.data == "true" else "#00000000"
+            self.update()
+            
+        self.on_hover = on_hover

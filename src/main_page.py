@@ -240,7 +240,7 @@ class TodoApp(ft.Row):
                 'data_de_criacao': '20/05/2025',
                 'data_de_termino': '22/05/2025',
                 'finalizado': 0,
-                'id_pagina': '1'
+                'id_pagina': 1
             },
             {
                 'id': 3,
@@ -251,7 +251,7 @@ class TodoApp(ft.Row):
                 'data_de_criacao': '20/05/2025',
                 'data_de_termino': '22/05/2025',
                 'finalizado': 0,
-                'id_pagina': '1'
+                'id_pagina': 1
             },
             {
                 'id': 3,
@@ -262,7 +262,7 @@ class TodoApp(ft.Row):
                 'data_de_criacao': '20/05/2025',
                 'data_de_termino': '22/05/2025',
                 'finalizado': 0,
-                'id_pagina': '1'
+                'id_pagina': 2
             },
             {
                 'id': '2',
@@ -273,7 +273,7 @@ class TodoApp(ft.Row):
                 'data_de_criacao': '20/05/2025',
                 'data_de_termino': '23/05/2025',
                 'finalizado': 0,
-                'id_pagina': '1'
+                'id_pagina': 2
             },
             {
                 'id': '5',
@@ -284,7 +284,7 @@ class TodoApp(ft.Row):
                 'data_de_criacao': '20/05/2025',
                 'data_de_termino': '23/05/2025',
                 'finalizado': 0,
-                'id_pagina': '1'
+                'id_pagina': 1
             }
         ]
 
@@ -323,7 +323,7 @@ class TodoApp(ft.Row):
                     f"Página {pagina["id"]}", 
                     page, 
                     self, 
-                    self.tarefas_por_idpagina[pagina["id"]]
+                    self.tarefas_por_idpagina[pagina["id"]] if self.tarefas_por_idpagina.get(pagina["id"]) else []
                 )
             )
 

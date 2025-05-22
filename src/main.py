@@ -11,6 +11,9 @@ def main(page: ft.Page):
 
     page.add(app)
 
-    page.on_resize = print('test')
+    def resize(e):
+        print('mudou de tamanho')
+
+    page.on_resize = resize
 
 ft.app(target=main)

@@ -1,8 +1,7 @@
 import flet as ft
 from cores import cores
 from componentes import *
-
-
+import todo_db as db
 
 class LeftMenu(ft.Container):
     def __init__(self, page, app: ft.Row, titulos):
@@ -73,7 +72,8 @@ class LeftMenu(ft.Container):
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         vertical_alignment= ft.CrossAxisAlignment.CENTER,
-                    )
+                    ),
+                    self.pages
                 ]
             )
 
@@ -180,6 +180,7 @@ class Main_Menu(ft.Container):
         super().__init__()
         self.expand = True
         self.padding = 20
+        self.bgcolor = cores["bg1"]
 
         self.tarefas = tarefas
         self.datas = []
@@ -229,101 +230,28 @@ class TodoApp(ft.Row):
     def __init__(self, page):
         super().__init__()
 
-        # teste (esses dados devem ser recebidos neste formato depois)
-        tarefas = [
-            {
-                'id': 1,
-                'titulo': 'tarefa_teste',
-                'descricao': 'descricao para teste',
-                'categoria': '',
-                'prioridade': 1,
-                'data_de_criacao': '20/05/2025',
-                'data_de_termino': '22/05/2025',
-                'finalizado': 0,
-                'id_pagina': 1
-            },
-            {
-                'id': 3,
-                'titulo': 'tarefa_teste',
-                'descricao': 'descricao para teste',
-                'categoria': '',
-                'prioridade': 1,
-                'data_de_criacao': '20/05/2025',
-                'data_de_termino': '22/05/2025',
-                'finalizado': 0,
-                'id_pagina': 1
-            },
-            {
-                'id': 3,
-                'titulo': 'tarefa_teste',
-                'descricao': 'descricao para teste',
-                'categoria': '',
-                'prioridade': 1,
-                'data_de_criacao': '20/05/2025',
-                'data_de_termino': '22/05/2025',
-                'finalizado': 0,
-                'id_pagina': 2
-            },
-            {
-                'id': '2',
-                'titulo': 'tarefa_teste2',
-                'descricao': 'descricao para teste',
-                'categoria': '',
-                'prioridade': 1,
-                'data_de_criacao': '20/05/2025',
-                'data_de_termino': '23/05/2025',
-                'finalizado': 0,
-                'id_pagina': 2
-            },
-            {
-                'id': '5',
-                'titulo': 'tarefa_teste2',
-                'descricao': 'descricao para teste',
-                'categoria': '',
-                'prioridade': 1,
-                'data_de_criacao': '20/05/2025',
-                'data_de_termino': '23/05/2025',
-                'finalizado': 0,
-                'id_pagina': 1
-            }
-        ]
+        paginas = db.get_paginas()
+        tarefas = db.get_tarefas()
 
-        paginas = [
-            {
-                "id": 1,
-                "titulo": 'titulo_teste',
-                "tipo": "tipo"
-            },
-            {
-                "id": 2,
-                "titulo": 'titulo_teste 2',
-                "tipo": "tipo"
-            },
-        ]
-
-        self.tarefas_por_idpagina = {}
+        self.tarefas_por_id_pagina = {}
 
         for tarefa in tarefas:
-            if self.tarefas_por_idpagina.get(tarefa["id_pagina"]):
-                self.tarefas_por_idpagina[tarefa["id_pagina"]].append(tarefa)
+            if self.tarefas_por_id_pagina.get(tarefa["id_pagina"]):
+                self.tarefas_por_id_pagina[tarefa["id_pagina"]].append(tarefa)
             else:
-                self.tarefas_por_idpagina.setdefault(tarefa["id_pagina"], [tarefa])
+                self.tarefas_por_id_pagina.setdefault(tarefa["id_pagina"], [tarefa])
 
-        print(self.tarefas_por_idpagina)
-
-        # eu vou precisar transformar depois os dados do banco de dados para chegar aqui
         self.paginas = {}
 
         # Organiza as páginas
         for pagina in paginas:
-            print(pagina)
             self.paginas.setdefault(
                 pagina["id"], 
                 Main_Menu(
-                    f"Página {pagina["id"]}", 
+                    pagina["titulo"], 
                     page, 
                     self, 
-                    self.tarefas_por_idpagina[pagina["id"]] if self.tarefas_por_idpagina.get(pagina["id"]) else []
+                    self.tarefas_por_id_pagina[pagina["id"]] if self.tarefas_por_id_pagina.get(pagina["id"]) else []
                 )
             )
 

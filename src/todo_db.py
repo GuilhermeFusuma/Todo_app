@@ -114,21 +114,34 @@ def get_tarefas(): # função que retorna todas as tarefas do bd
     return tarefas
 
 # Não sei se será usado
-# def get_pagina_id(id):
-#     conn = sql.connect("todo_app.db")
-#     cursor = conn.cursor()
-#     cursor.execute("SELECT * from paginas WHERE id_pagina = ?", (id))
+def get_pagina_id(id):
+    conn = sql.connect("todo_app.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT * from paginas WHERE id_pagina = ?", (id,))
     
-#     conn.close()
-#     return cursor.fetchall()
+    conn.close()
+    
 
-# def get_tarefa_id(id):
-#     conn = sql.connect("todo_app.db")
-#     cursor = conn.cursor()
-#     cursor.execute("SELECT * FROM tarefas WHERE id_tarefa = ?", (id))
+def get_tarefa_id(id):
+    conn = sql.connect("todo_app.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM tarefas WHERE id_tarefa = ?", (id,))
     
-#     conn.close()
-#     return cursor.fetchall()
+    
+    tarefa = cursor.fetchall()[0]
+    tarefa_dict = {
+            "id": tarefa[0],
+            "titulo": tarefa[1],
+            "descricao": tarefa[2],
+            "categoria": tarefa[3],
+            "prioridade": tarefa[4],
+            "data_de_criacao": tarefa[5],
+            "data_de_termino": tarefa[6],
+            "finalizado": tarefa[7],
+            "id_pagina": tarefa[8]
+        }
+    conn.close()
+    return tarefa_dict
 
 def get_paginaids():
     conn = sql.connect("todo_app.db")
@@ -142,6 +155,7 @@ def get_paginaids():
             "titulo": pagina[1]
         })
     
+    conn.close()
     return paginas
 
 
@@ -156,7 +170,7 @@ def edit_tarefa(id, titulo, descricao, prioridade, data_term):
     conn = sql.connect("todo_app.db")
     cursor = conn.cursor()
 
-    cursor.execute("UPDATE tarefas SET titulo = ?, descricao = ?, prioridade = ?, data_termino = ? WHERE id_tarefa = ?", (titulo, descricao, prioridade, data_term, id))
+    cursor.execute("UPDATE tarefas SET titulo = ?, descricao = ?, prioridade = ?, data_de_termino = ? WHERE id_tarefa = ?", (titulo, descricao, prioridade, data_term, id))
     conn.commit()
     conn.close()
 

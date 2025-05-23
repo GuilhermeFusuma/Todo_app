@@ -2,15 +2,18 @@ import flet as ft
 from datetime import datetime
 
 class EditableLabel(ft.Container):
-    def __init__(self, content, type, on_submit=None):
+    def __init__(self, titulo, content, type, on_submit=None):
         super().__init__()
+        self.titulo = titulo
         self.type = type
         self.content_value = content
         self.on_submit = on_submit
         self.width = 170
 
+        # Parte editavel
         self.text = ft.Text(self.content_value) # Modo texto
         self.input = ft.TextField(value=self.content_value, autofocus=True, max_length=60) # Modo editável
+        self.editavel = ft.Container(controls=[self.text])
 
         # Eventos
         self.on_click = self.edit
@@ -18,11 +21,16 @@ class EditableLabel(ft.Container):
         self.input.on_submit = self.save # salva ao enviar
         self.input.on_blur = self.save # Salva quando clica fora
 
-        self.content = self.text # Inicializa com o texto
+        self.content = ft.Column( # Inicializa com o texto
+            controls=[
+                ft.Text(self.titulo),
+                self.editavel
+            ]
+        )
 
     def edit(self, e):
         self.input.value = self.content_value
-        self.content = self.input
+        self.editavel = self.input
         self.update()
         self.input.focus() # É necessário estar depois do update
 

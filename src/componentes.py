@@ -53,6 +53,68 @@ class Balao(ft.Container):
             ]
         )
         
+class ContainerTarefas(ft.Container):
+    def __init__(self, data, dados: list, pai):
+        super().__init__()
+        self.data = data
+        self.dados = dados
+        self.pai = pai  # armazenar main_page se precisar depois
+
+        # Configuração visual
+        self.padding = 15  
+        self.aberto = False
+        self.arrow = ArrowButton(self.expandir)
+        self.arrow.rotate = 0
+
+        # Cabeçalho com título e botão de expandir
+        self.header = ft.Container(
+            content=ft.Row(    
+                controls=[
+                    self.arrow,
+                    ft.Text("Para " + self.data, size=18)
+                ]
+            ),
+            padding=10,
+            border=ft.border.only(bottom=ft.border.BorderSide(1, cores["fore2"]))
+        )
+
+        # Coluna com as tarefas (inicialmente invisível)
+        self.tarefas = ft.Column(
+            controls=[
+                Tarefa(
+                    tarefa['id'],
+                    tarefa['id_pagina'],
+                    tarefa['titulo'],
+                    tarefa['data_de_criacao'],
+                    self.pai,
+                    self,
+                    desc=tarefa['descricao'],
+                    categoria=tarefa['categoria'],
+                    prioridade=tarefa['prioridade'],
+                    data_term=tarefa['data_de_termino'],
+                )
+                for tarefa in self.dados
+            ],
+            visible=False,
+            expand=True,
+            spacing=10
+        )
+
+        # Content é composto do cabeçalho + coluna de tarefas
+        self.content = ft.Column(
+            controls=[
+                self.header,
+                self.tarefas
+            ],
+            spacing=10
+        )
+
+    def expandir(self, e):
+        self.aberto = not self.aberto
+        self.tarefas.visible = self.aberto
+        self.arrow.rotate = 3.14/2 if self.aberto else 0
+        self.update()
+
 class Tarefa(ft.Container):
     def __init__(self, id_tarefa, id_pagina, titulo, data_cri, main_page, container_tarefas, desc="", categoria="", prioridade=0, data_term=""):
         super().__init__()
@@ -323,7 +385,12 @@ class LabelEditavel(ft.Container):
                 datetime.strptime(data_str, "%d/%m/%Y")
                 return True
             except ValueError:
-                return False
+                try:
+                    datetime.strptime(data_str, "%d-%m-%Y")
+                    return True
+                except ValueError:
+                    return False
+            
 
         valid = (
             (self.type == 'int' and self.input.value.isdigit()) or
@@ -338,68 +405,6 @@ class LabelEditavel(ft.Container):
                 self.on_submit(self.content_value)
 
         self.conteudo.controls = [self.text]  # Volta para o modo texto
-        self.update()
-
-class ContainerTarefas(ft.Container):
-    def __init__(self, data, dados: list, pai):
-        super().__init__()
-        self.data = data
-        self.dados = dados
-        self.pai = pai  # armazenar main_page se precisar depois
-
-        # Configuração visual
-        self.padding = 15  
-        self.aberto = False
-        self.arrow = ArrowButton(self.expandir)
-        self.arrow.rotate = 0 
-
-        # Cabeçalho com título e botão de expandir
-        self.header = ft.Container(
-            content=ft.Row(    
-                controls=[
-                    self.arrow,
-                    ft.Text(self.data, size=18)
-                ]
-            ),
-            padding=10,
-            border=ft.border.only(bottom=ft.border.BorderSide(1, cores["fore2"]))
-        )
-
-        # Coluna com as tarefas (inicialmente invisível)
-        self.tarefas = ft.Column(
-            controls=[
-                Tarefa(
-                    tarefa['id'],
-                    tarefa['id_pagina'],
-                    tarefa['titulo'],
-                    tarefa['data_de_criacao'],
-                    self.pai,
-                    self,
-                    desc=tarefa['descricao'],
-                    categoria=tarefa['categoria'],
-                    prioridade=tarefa['prioridade'],
-                    data_term=tarefa['data_de_termino'],
-                )
-                for tarefa in self.dados
-            ],
-            visible=False,
-            expand=True,
-            spacing=10
-        )
-
-        # Content é composto do cabeçalho + coluna de tarefas
-        self.content = ft.Column(
-            controls=[
-                self.header,
-                self.tarefas
-            ],
-            spacing=10
-        )
-
-    def expandir(self, e):
-        self.aberto = not self.aberto
-        self.tarefas.visible = self.aberto
-        self.arrow.rotate = 3.14/2 if self.aberto else 0
         self.update()
 
 class BotaoPagina(ft.Container):

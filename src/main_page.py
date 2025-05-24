@@ -175,29 +175,80 @@ class Chat(ft.Container):
         self.campo_texto.update()
         self.campo_texto.focus()
 
-class Main_Menu(ft.Container):
-    def __init__(self, titulo, page, app: ft.Row, tarefas):
+class Main_Page(ft.Container):
+    def __init__(self, titulo, page, app: ft.Row, id_pagina):
         super().__init__()
         self.expand = True
         self.padding = 20
         self.bgcolor = cores["bg1"]
 
-        self.tarefas = tarefas
+        self.id = id_pagina
         self.datas = []
         self.tarefas_por_data = {}
 
-        # Organização
-        for tarefa in self.tarefas: # cria uma lista com todas as datas
-            if tarefa["data_de_termino"] not in self.datas:
-                self.datas.append(tarefa["data_de_termino"])
-       
-        for data in self.datas: # organiza o dicionário para armazenar as tarefas por data
-            temp_list = []
-            for tarefa in self.tarefas:
-                if tarefa["data_de_termino"] == data:
-                    temp_list.append(tarefa)
-        
-            self.tarefas_por_data.setdefault(data, temp_list)
+        def criar_tarefa():
+            titulo = ft.TextField(
+                label="Titulo",
+            )
+            data_termino = ft.TextField(
+                label="Data de término",
+                hint_text="--/--/----",
+            )
+
+            # Verifica os dados
+            def verificar(e):
+                titulo_valido = False
+                data_valido = False
+
+                if len(titulo.value.strip()) > 0: # verifica se tem texto no campo
+                    titulo_valido = True
+                
+                try: # verifica se a data é válida
+                    datetime.strptime(data_termino.value,"%d/%m/%Y")
+                    data_valido = True
+                except ValueError:
+                    data_valido = False
+
+                if titulo_valido and data_valido: # Se ambos os campos forem válidos, adiciona no banco de dados e atualiza a página
+                    db.add_tarefa(
+                        titulo.value,
+                        datetime.now().date().strftime("%d/%m/%Y"),
+                        data_termino.value,
+                        self.id
+                    )
+
+                    self.conteudo.controls.remove(container_criar)
+                    self.update()
+
+                    self.consultar_tarefas()
+
+            container_criar = ft.Container(
+                bgcolor=cores["bg2"],
+                padding=15,
+                border_radius=20,
+                shadow=ft.BoxShadow(blur_radius=7, color=ft.Colors.BLACK, offset=ft.Offset(-2.0, 2.0)),
+                content=ft.Column(
+                    controls=[
+                        titulo,
+                        data_termino,
+                        ft.Button(
+                            text="Criar tarefa",
+                            on_click=verificar,
+                            bgcolor=cores["fore2"],
+                            color=cores["fore1"],
+                        )
+                    ],
+                    height=300,
+                    width=270,
+                    horizontal_alignment=ft.CrossAxisAlignment.END,
+                    alignment=ft.MainAxisAlignment.SPACE_AROUND
+                )
+            )
+
+            self.conteudo.controls.append(
+                container_criar
+            )
+            self.update()
 
         # coluna que organiza os containeres das tarefas
         self.tarefas_body = ft.Column(
@@ -209,11 +260,20 @@ class Main_Menu(ft.Container):
             controls=[
                 ft.Column(
                     controls=[
-                        ft.Row(
+
+                        ft.Row( # Header da página
                             controls=[
-                                ft.Text(titulo, size = 35)
-                            ]
+                                ft.Text(titulo, size = 35),
+                                ft.FloatingActionButton(
+                                    bgcolor=cores["fore2"],
+                                    foreground_color=cores["fore1"],
+                                    icon=ft.Icons.ADD,
+                                    on_click=lambda e: criar_tarefa()
+                                )
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN
                         ),
+
                         self.tarefas_body
                     ],
                     spacing = 15
@@ -226,11 +286,34 @@ class Main_Menu(ft.Container):
         # Conteúdo
         self.content = self.conteudo
 
+    def consultar_tarefas(self):
+        tarefas = db.tarefas_por_pagina(self.id)
+
+        # Reseta os dados
+        self.datas = []
+        self.tarefas_por_data = {}
+        self.tarefas_body.controls.clear()
+
+        # Organização
+        for tarefa in tarefas: # cria uma lista com todas as datas
+            if tarefa["data_de_termino"] not in self.datas:
+                self.datas.append(tarefa["data_de_termino"])
+       
+        for data in self.datas: # organiza o dicionário para armazenar as tarefas por data
+            temp_list = []
+            for tarefa in tarefas:
+                if tarefa["data_de_termino"] == data:
+                    temp_list.append(tarefa)
+        
+            self.tarefas_por_data.setdefault(data, temp_list)
+
         # Adiciona as tarefas no conteúdo
         for data in self.datas:
-            tarefas = self.tarefas_por_data[data]
+            tars = self.tarefas_por_data[data]
 
-            self.tarefas_body.controls.append(ContainerTarefas(data, tarefas, self))
+            self.tarefas_body.controls.append(ContainerTarefas(data, tars, self))
+
+        self.update()
 
     def att_datas(self):
         for container in self.tarefas_body.controls:
@@ -243,28 +326,19 @@ class TodoApp(ft.Row):
     def __init__(self, page):
         super().__init__()
 
+        self.func = None
         paginas = db.get_paginas()
-        tarefas = db.get_tarefas()
-
-        self.tarefas_por_id_pagina = {}
-
-        for tarefa in tarefas:
-            if self.tarefas_por_id_pagina.get(tarefa["id_pagina"]):
-                self.tarefas_por_id_pagina[tarefa["id_pagina"]].append(tarefa)
-            else:
-                self.tarefas_por_id_pagina.setdefault(tarefa["id_pagina"], [tarefa])
-
         self.paginas = {}
 
         # Organiza as páginas
         for pagina in paginas:
             self.paginas.setdefault(
                 pagina["id"], 
-                Main_Menu(
+                Main_Page(
                     pagina["titulo"], 
                     page, 
                     self, 
-                    self.tarefas_por_id_pagina[pagina["id"]] if self.tarefas_por_id_pagina.get(pagina["id"]) else []
+                    pagina["id"]
                 )
             )
 
@@ -285,7 +359,11 @@ class TodoApp(ft.Row):
             self.chat_menu
         ]
 
+    def get_func(self, fn):
+        self.func = fn
+
     def switch_page(self, id): # troca de páginas
         self.controls.pop(1)
         self.controls.insert(1, self.paginas[id])
         self.update()
+        self.paginas[id].consultar_tarefas()

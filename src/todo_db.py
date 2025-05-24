@@ -1,4 +1,5 @@
 import sqlite3 as sql
+from datetime import datetime
 
 # criando connection e cursor
 conn = sql.connect("todo_app.db")
@@ -33,9 +34,21 @@ CREATE TABLE IF NOT EXISTS tarefas (
 cursor.execute("SELECT * FROM paginas")
 result = cursor.fetchall()
 if not len(result):
+    hoje = datetime.now().date()
+    hoje_formatado = hoje.strftime("%d/%m/%Y")
+
     cursor.execute("""
     INSERT INTO paginas (titulo, tipo) VALUES ("Lista de tarefas (teste base)", "tarefa")
     """)
+    cursor.execute("""
+SELECT id_pagina FROM paginas
+""")
+    
+    id_pagina = cursor.fetchall()[0][0]
+    cursor.execute("""
+INSERT INTO tarefas (titulo, descricao, categoria, prioridade, data_de_criacao, data_de_termino, finalizado, id_pagina)
+VALUES ("Criar novas tarefas", "", "", 0, ?, ?, 0, ?)    
+""", (hoje_formatado, hoje_formatado, id_pagina))
 
 conn.commit()
 conn.close()
@@ -50,10 +63,10 @@ def add_pagina(titulo, tipo):
     cursor.execute("INSERT INTO paginas (titulo, tipo) VALUES (?, ?)", (titulo, tipo))
     conn.commit()
     conn.close()
-def add_tarefa(titulo, data_cri, data_term, fin, id_pag, descricao='', categoria='', prioridade=0):
+def add_tarefa(titulo, data_cri, data_term, id_pag, descricao='', categoria='', prioridade=0):
     conn = sql.connect("todo_app.db")
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO tarefas (titulo, descricao, categoria, prioridade, data_de_criacao, data_de_termino, finalizado, id_pagina) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (titulo, descricao, categoria, prioridade, data_cri, data_term, fin, id_pag))
+    cursor.execute("INSERT INTO tarefas (titulo, descricao, categoria, prioridade, data_de_criacao, data_de_termino, finalizado, id_pagina) VALUES (?, ?, ?, ?, ?, ?, 0, ?)", (titulo, descricao, categoria, prioridade, data_cri, data_term, id_pag))
     conn.commit()
     conn.close()
 
@@ -90,13 +103,13 @@ def get_paginas(): # função que retorna todas as páginas do bd
     conn.close()
     return paginas
 
-def get_tarefas(): # função que retorna todas as tarefas do bd
+def tarefas_por_pagina(id_pagina): # função que retorna as tarefas pela página
     conn = sql.connect("todo_app.db")
     cursor = conn.cursor()
 
     tarefas = []
 
-    cursor.execute("SELECT * FROM tarefas")
+    cursor.execute("SELECT * FROM tarefas WHERE id_pagina = ?", (id_pagina,))
     for tarefa in cursor.fetchall():
         tarefas.append({
             "id": tarefa[0],

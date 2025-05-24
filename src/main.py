@@ -11,6 +11,8 @@ def main(page: ft.Page):
 
     page.add(app)
 
+    app.paginas[app.ids[0]].consultar_tarefas()
+
     def resize(e):
         print('mudou de tamanho')
 

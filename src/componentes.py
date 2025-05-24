@@ -54,9 +54,10 @@ class Balao(ft.Container):
         )
         
 class Tarefa(ft.Container):
-    def __init__(self, id_tarefa, titulo, data_cri, desc="", categoria="", prioridade=0, data_term=""):
+    def __init__(self, id_tarefa, id_pagina, titulo, data_cri, main_page, container_tarefas, desc="", categoria="", prioridade=0, data_term=""):
         super().__init__()
         self.id = id_tarefa
+        self.id_pagina = id_pagina
         self.titulo = titulo
         self.desc = desc
         self.categoria = categoria
@@ -71,18 +72,47 @@ class Tarefa(ft.Container):
         # Parte interativa
         self.func = lambda e : print('teste')
 
-        def apagar(e): 
+        def apagar_info(info_tarefa): 
+            main_page.content.controls.remove(info_tarefa)
+            container_tarefas.tarefas.controls.remove(self)
+            
             db.delete_tarefa(self.id)
-            # TODO um modo de atualizar a página depois de apagar esta tarefa
+            main_page.att_datas()
+        self.apagar_info = apagar_info
 
-        self.apagar = apagar 
+        def apagar():
+            container_tarefas.tarefas.controls.remove(self)
+            db.delete_tarefa(self.id)
+            container_tarefas.tarefas.update()
+            main_page.att_datas()
+
+        def salvar(info_tarefa):
+            main_page.content.controls.remove(info_tarefa)
+            db.edit_tarefa(info_tarefa.id, info_tarefa.titulo, info_tarefa.descricao, info_tarefa.prioridade, info_tarefa.data_termino)
+
+            main_page.update()
         
-        # def editar(e):
+        def editar():
+            main_page.content.controls.append(
+                InfoTarefa(
+                    self.id,
+                    self.titulo,
+                    self.desc,
+                    self.data_criacao,
+                    self.data_termino,
+                    self.prioridade,
+                    self.categoria,
+                    self.id_pagina,
+                    apagar_info,
+                    salvar
+                )
+            )
+            main_page.update()
 
         self.icons = ft.Row(
             controls=[
-                MyIconBtn("src/assets/edit_icon.png", self.func, 1),
-                MyIconBtn("src/assets/remove_icon.png", self.apagar, 1)
+                MyIconBtn("src/assets/edit_icon.png", lambda e: editar(), 1),
+                MyIconBtn("src/assets/remove_icon.png", lambda e: apagar(), 1)
             ]
         )
 
@@ -110,7 +140,7 @@ class Tarefa(ft.Container):
 
 # Componentes para a janela de detalhes da tarefa
 class InfoTarefa(ft.Container):
-    def __init__(self, id, titulo, descricao, data_cri, data_term, prio, categoria, id_pagina):
+    def __init__(self, id, titulo, descricao, data_cri, data_term, prio, categoria, id_pagina, rm_func, save_func):
         super().__init__()
         self.bgcolor = cores["bg2"]
         self.width = 800
@@ -127,10 +157,8 @@ class InfoTarefa(ft.Container):
         self.categoria = categoria
         self.id_pagina = id_pagina
 
-        def salvar_tarefa():
-            db.edit_tarefa(self.id, self.titulo, self.descricao, self.prioridade, self.data_termino)
-            #TODO arranjar uma maneira de fechar a janela de edição
-
+        self.save_fn = lambda e: save_func(self)
+        self.rm_fn = lambda e: rm_func(self)
 
         def att_content(titulo='', desc='', term='', prio='', cat=''):
             if titulo:
@@ -229,13 +257,13 @@ class InfoTarefa(ft.Container):
                                         "Excluir",
                                         bgcolor=cores["fore2"],
                                         color=cores["fore1"],
-                                        on_click=lambda e: db.delete_tarefa(self.id)
+                                        on_click=self.rm_fn
                                     ),
                                     ft.Button(
                                         "Salvar",
                                         bgcolor=cores["fore2"], 
                                         color=cores["fore1"],
-                                        on_click=lambda e:  
+                                        on_click=self.save_fn
                                     )
                                 ]
                             )
@@ -312,24 +340,20 @@ class LabelEditavel(ft.Container):
         self.conteudo.controls = [self.text]  # Volta para o modo texto
         self.update()
 
-
 class ContainerTarefas(ft.Container):
-
-    def __init__(self, data, dados: list):
-        #TODO pensar em uma forma de pegar os dados de uma forma que eu possa separar de forma eficiente 
+    def __init__(self, data, dados: list, pai):
         super().__init__()
         self.data = data
-
         self.dados = dados
-        self.tarefas = ft.Column(expand=True)
+        self.pai = pai  # armazenar main_page se precisar depois
 
-        # Config
+        # Configuração visual
         self.padding = 15  
-        
         self.aberto = False
         self.arrow = ArrowButton(self.expandir)
         self.arrow.rotate = 0 
 
+        # Cabeçalho com título e botão de expandir
         self.header = ft.Container(
             content=ft.Row(    
                 controls=[
@@ -337,44 +361,45 @@ class ContainerTarefas(ft.Container):
                     ft.Text(self.data, size=18)
                 ]
             ),
-            padding = 10,
+            padding=10,
             border=ft.border.only(bottom=ft.border.BorderSide(1, cores["fore2"]))
         )
 
-        # Adiciona as tarefas em classes no self.tarefas
-        for tarefa in self.dados:
-            self.tarefas.controls.append(
+        # Coluna com as tarefas (inicialmente invisível)
+        self.tarefas = ft.Column(
+            controls=[
                 Tarefa(
                     tarefa['id'],
+                    tarefa['id_pagina'],
                     tarefa['titulo'],
                     tarefa['data_de_criacao'],
-                    tarefa['descricao'],
-                    tarefa['categoria'],
-                    tarefa['prioridade'],
-                    tarefa['data_de_termino']
+                    self.pai,
+                    self,
+                    desc=tarefa['descricao'],
+                    categoria=tarefa['categoria'],
+                    prioridade=tarefa['prioridade'],
+                    data_term=tarefa['data_de_termino'],
                 )
-            )
+                for tarefa in self.dados
+            ],
+            visible=False,
+            expand=True,
+            spacing=10
+        )
 
+        # Content é composto do cabeçalho + coluna de tarefas
         self.content = ft.Column(
             controls=[
-                self.header
+                self.header,
+                self.tarefas
             ],
-            spacing=20
+            spacing=10
         )
 
     def expandir(self, e):
-        if not self.aberto:
-            for tarefa in self.tarefas.controls:
-                self.content.controls.append(tarefa)
-            self.arrow.rotate = 3.14/2 # Rotaciona para baixo
-            self.aberto = True
-
-        elif self.aberto:
-            self.content.controls = [self.header] # remove as tarefas deixando apenas o header
-            self.header
-            self.aberto = False
-            self.arrow.rotate = 0
-
+        self.aberto = not self.aberto
+        self.tarefas.visible = self.aberto
+        self.arrow.rotate = 3.14/2 if self.aberto else 0
         self.update()
 
 class BotaoPagina(ft.Container):

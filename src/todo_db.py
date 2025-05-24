@@ -174,7 +174,7 @@ def edit_tarefa(id, titulo, descricao, prioridade, data_term):
     conn.commit()
     conn.close()
 
-def check_tarefa(id, value):
+def check_tarefa(id, value: bool = True):
     conn = sql.connect("todo_app.db")
     cursor = conn.cursor()
 

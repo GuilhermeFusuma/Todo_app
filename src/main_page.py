@@ -205,26 +205,39 @@ class Main_Menu(ft.Container):
             scroll="auto"
         )
 
-        # Conteúdo
-        self.content = ft.Column(
+        self.conteudo = ft.Stack(
             controls=[
-                ft.Row(
+                ft.Column(
                     controls=[
-                        ft.Text(titulo, size = 35)
-                    ]
-                ),
-                self.tarefas_body
+                        ft.Row(
+                            controls=[
+                                ft.Text(titulo, size = 35)
+                            ]
+                        ),
+                        self.tarefas_body
+                    ],
+                    spacing = 15
+                )
             ],
-            spacing = 15
+            expand=True,
+            alignment=ft.alignment.center
         )
+
+        # Conteúdo
+        self.content = self.conteudo
 
         # Adiciona as tarefas no conteúdo
         for data in self.datas:
             tarefas = self.tarefas_por_data[data]
 
-            self.tarefas_body.controls.append(ContainerTarefas(data, tarefas))
+            self.tarefas_body.controls.append(ContainerTarefas(data, tarefas, self))
 
-    # def get_data
+    def att_datas(self):
+        for container in self.tarefas_body.controls:
+            if not len(container.tarefas.controls):
+                self.tarefas_body.controls.remove(container)
+        
+        self.update()
 
 class TodoApp(ft.Row):
     def __init__(self, page):

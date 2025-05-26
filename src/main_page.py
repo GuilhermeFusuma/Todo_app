@@ -4,13 +4,15 @@ from componentes import *
 import todo_db as db
 
 class LeftMenu(ft.Container):
-    def __init__(self, page, app: ft.Row, titulos):
+    def __init__(self, page, app: ft.Row):
         super().__init__()
         self.app = app
-        self.titulos = titulos # lista com tuplas contendo o id e o título da página
+        # lista com tuplas contendo o id e o título da página    
+        self.paginas = db.get_paginaids()
+
 
         # Configurações do container
-        self.padding = 5
+        self.padding = 10
         self.bgcolor = cores["bg2"]
         self.width = 300
         self.temp_animacao = 500
@@ -24,7 +26,9 @@ class LeftMenu(ft.Container):
         self.paginas_container = ft.Column()
 
         self.pages = ft.Column(
-            controls=[BotaoPagina(lambda e, id=id: app.switch_page(id), titulo) for id, titulo in self.titulos]
+            expand=True,
+            scroll=True,
+            controls=[BotaoPagina(lambda e, id=pagina["id"]: self.app.switch_page(id), pagina["titulo"], pagina["id"], self) for pagina in self.paginas]
         )
 
         # Cria as páginas
@@ -43,9 +47,75 @@ class LeftMenu(ft.Container):
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     vertical_alignment= ft.CrossAxisAlignment.CENTER,
                 ),
-                self.pages
+                self.pages,
+                ft.Container(
+                    content=ft.IconButton(
+                        icon=ft.Icons.ADD,
+                        bgcolor=cores["fore2"],
+                        icon_color=cores["fore1"],
+                        icon_size=30,
+                        on_click=lambda e: self.add_page(),
+                    ),
+                    padding=10
+                )
             ]
         )
+
+    def add_page(self):
+        main_page = self.app.controls[1] #main page para adicionar a tela de criação
+
+        def verificar(titulo):
+            db.add_pagina(titulo, "tarefas")
+
+            main_page.content.controls.remove(container_criar) # remove a janela da página a mostra
+            main_page.update()
+            self.att_paginas() # Atualiza as páginas neste container
+
+        campo_texto = ft.TextField(
+            label="Título",
+        )
+
+        container_criar = ft.Container(
+            bgcolor=cores["bg2"],
+            padding=40,
+            width= 300,
+            height=180,
+            border_radius=10,
+            shadow=ft.BoxShadow(blur_radius=4, color=ft.Colors.BLACK, offset=ft.Offset(-4, 4)),
+            content=ft.Column(
+                controls=[
+                    campo_texto,
+                    ft.Button(
+                        text="Criar página",
+                        bgcolor=cores["fore2"],
+                        color=cores["fore1"],
+                        on_click=lambda e: verificar(campo_texto.value)
+                    )
+                ],
+                alignment=ft.MainAxisAlignment.END
+            )
+        )
+
+        if len(main_page.content.controls) < 2:
+            main_page.content.controls.append(container_criar)
+            main_page.update()
+
+    def att_paginas(self):
+        self.paginas = db.get_paginaids()  # Atualiza as páginas no banco
+        self.pages.controls.clear()  # Limpa os botões antigos
+
+        # Cria novos botões
+        for pagina in self.paginas:
+            botao = BotaoPagina(
+                lambda e, id=pagina["id"]: self.app.switch_page(id),
+                pagina["titulo"],
+                pagina["id"],
+                self
+            )
+            self.pages.controls.append(botao)
+        self.app.get_paginas() # Atualiza as páginas existentes no app
+
+        self.pages.update()  # Atualiza o container que é visível        
 
     # Modifica o estado do menu à esquerda entre minimizado e normal
     def toggle_menu(self, e):
@@ -186,70 +256,6 @@ class Main_Page(ft.Container):
         self.datas = []
         self.tarefas_por_data = {}
 
-        def criar_tarefa():
-            titulo = ft.TextField(
-                label="Titulo",
-            )
-            data_termino = ft.TextField(
-                label="Data de término",
-                hint_text="--/--/----",
-            )
-
-            # Verifica os dados
-            def verificar(e):
-                titulo_valido = False
-                data_valido = False
-
-                if len(titulo.value.strip()) > 0: # verifica se tem texto no campo
-                    titulo_valido = True
-                
-                try: # verifica se a data é válida
-                    datetime.strptime(data_termino.value,"%d/%m/%Y")
-                    data_valido = True
-                except ValueError:
-                    data_valido = False
-
-                if titulo_valido and data_valido: # Se ambos os campos forem válidos, adiciona no banco de dados e atualiza a página
-                    db.add_tarefa(
-                        titulo.value,
-                        datetime.now().date().strftime("%d/%m/%Y"),
-                        data_termino.value,
-                        self.id
-                    )
-
-                    self.conteudo.controls.remove(container_criar)
-                    self.update()
-
-                    self.consultar_tarefas()
-
-            container_criar = ft.Container(
-                bgcolor=cores["bg2"],
-                padding=15,
-                border_radius=20,
-                shadow=ft.BoxShadow(blur_radius=7, color=ft.Colors.BLACK, offset=ft.Offset(-2.0, 2.0)),
-                content=ft.Column(
-                    controls=[
-                        titulo,
-                        data_termino,
-                        ft.Button(
-                            text="Criar tarefa",
-                            on_click=verificar,
-                            bgcolor=cores["fore2"],
-                            color=cores["fore1"],
-                        )
-                    ],
-                    height=300,
-                    width=270,
-                    horizontal_alignment=ft.CrossAxisAlignment.END,
-                    alignment=ft.MainAxisAlignment.SPACE_AROUND
-                )
-            )
-
-            self.conteudo.controls.append(
-                container_criar
-            )
-            self.update()
-
         # coluna que organiza os containeres das tarefas
         self.tarefas_body = ft.Column(
             expand=True,
@@ -268,7 +274,7 @@ class Main_Page(ft.Container):
                                     bgcolor=cores["fore2"],
                                     foreground_color=cores["fore1"],
                                     icon=ft.Icons.ADD,
-                                    on_click=lambda e: criar_tarefa()
+                                    on_click=lambda e: self.criar_tarefa()
                                 )
                             ],
                             alignment=ft.MainAxisAlignment.SPACE_BETWEEN
@@ -285,6 +291,74 @@ class Main_Page(ft.Container):
 
         # Conteúdo
         self.content = self.conteudo
+
+    def criar_tarefa(self):
+        titulo = ft.TextField(
+            label="Titulo",
+        )
+        data_termino = ft.TextField(
+            label="Data de término",
+            hint_text="--/--/----",
+        )
+
+        # Verifica os dados
+        def verificar(e):
+            titulo_valido = False
+            data_valido = False
+
+            if len(titulo.value.strip()) > 0: # verifica se tem texto no campo
+                titulo_valido = True
+            
+            try: # verifica se a data é válida
+                datetime.strptime(data_termino.value,"%d/%m/%Y")
+                data_valido = True
+            except ValueError:
+                data_valido = False
+
+            if titulo_valido and data_valido: # Se ambos os campos forem válidos, adiciona no banco de dados e atualiza a página
+                db.add_tarefa(
+                    titulo.value,
+                    datetime.now().date().strftime("%d/%m/%Y"),
+                    data_termino.value,
+                    self.id
+                )
+
+                self.conteudo.controls.remove(container_criar)
+                self.update()
+
+                self.consultar_tarefas()
+            elif titulo_valido:
+                data_termino.focus()
+            elif data_valido:
+                titulo.focus()
+
+        container_criar = ft.Container(
+            bgcolor=cores["bg2"],
+            padding=15,
+            border_radius=20,
+            shadow=ft.BoxShadow(blur_radius=7, color=ft.Colors.BLACK, offset=ft.Offset(-2.0, 2.0)),
+            content=ft.Column(
+                controls=[
+                    titulo,
+                    data_termino,
+                    ft.Button(
+                        text="Criar tarefa",
+                        on_click=verificar,
+                        bgcolor=cores["fore2"],
+                        color=cores["fore1"],
+                    )
+                ],
+                height=300,
+                width=270,
+                horizontal_alignment=ft.CrossAxisAlignment.END,
+                alignment=ft.MainAxisAlignment.SPACE_AROUND
+            )
+        )
+
+        if len(self.conteudo.controls) < 2:
+            self.conteudo.controls.append(container_criar)
+        self.update()
+
 
     def consultar_tarefas(self):
         tarefas = db.tarefas_por_pagina(self.id)
@@ -325,28 +399,13 @@ class Main_Page(ft.Container):
 class TodoApp(ft.Row):
     def __init__(self, page):
         super().__init__()
+        self.page = page
 
         self.func = None
-        paginas = db.get_paginas()
-        self.paginas = {}
-
-        # Organiza as páginas
-        for pagina in paginas:
-            self.paginas.setdefault(
-                pagina["id"], 
-                Main_Page(
-                    pagina["titulo"], 
-                    page, 
-                    self, 
-                    pagina["id"]
-                )
-            )
-
-        self.ids = list(self.paginas.keys())
-        self.id_titulos = [(pagina["id"], pagina["titulo"]) for pagina in paginas]
+        self.get_paginas()
 
         # janelas
-        self.left_menu = LeftMenu(page, self, self.id_titulos)
+        self.left_menu = LeftMenu(page, self)
         self.chat_menu = Chat_Menu(page, self)
 
         #config
@@ -358,6 +417,25 @@ class TodoApp(ft.Row):
             self.paginas[self.ids[0]],
             self.chat_menu
         ]
+
+    def get_paginas(self):
+        paginas = db.get_paginas()
+        self.paginas = {}
+
+        # Organiza as páginas
+        for pagina in paginas:
+            self.paginas.setdefault(
+                pagina["id"], 
+                Main_Page(
+                    pagina["titulo"], 
+                    self.page, 
+                    self, 
+                    pagina["id"]
+                )
+            )
+
+            self.ids = list(self.paginas.keys())
+            # self.id_titulos = [(pagina["id"], pagina["titulo"]) for pagina in self.ids]
 
     def get_func(self, fn):
         self.func = fn

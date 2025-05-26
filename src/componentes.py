@@ -166,7 +166,8 @@ class Tarefa(ft.Container):
                     self.categoria,
                     self.id_pagina,
                     apagar_info,
-                    salvar
+                    salvar,
+                    main_page
                 )
             )
             main_page.update()
@@ -202,7 +203,7 @@ class Tarefa(ft.Container):
 
 # Componentes para a janela de detalhes da tarefa
 class InfoTarefa(ft.Container):
-    def __init__(self, id, titulo, descricao, data_cri, data_term, prio, categoria, id_pagina, rm_func, save_func):
+    def __init__(self, id, titulo, descricao, data_cri, data_term, prio, categoria, id_pagina, rm_func, save_func, main_page):
         super().__init__()
         self.bgcolor = cores["bg2"]
         self.width = 800
@@ -221,6 +222,9 @@ class InfoTarefa(ft.Container):
 
         self.save_fn = lambda e: save_func(self)
         self.rm_fn = lambda e: rm_func(self)
+        def sair():
+            main_page.content.controls.remove(self)
+            main_page.update()
 
         def att_content(titulo='', desc='', term='', prio='', cat=''):
             if titulo:
@@ -234,114 +238,125 @@ class InfoTarefa(ft.Container):
             if cat:
                 self.categoria = cat
 
-        self.content = ft.Row( # Conteúdo
+        self.content = ft.Stack(
             controls=[
-                ft.Container( # Parte da Esquerda
-                    content=ft.Column(
-                        controls=[
-                            ft.Column( # Detalhes da tarefa
+                ft.Row( # Conteúdo
+                    controls=[
+                        ft.Container( # Parte da Esquerda
+                            content=ft.Column(
                                 controls=[
-                                    ft.Text("Data de Criação:", color=cores["fore1"], weight=ft.FontWeight.BOLD),
-                                    LabelEditavel(
-                                        self.data_criacao,
-                                        "date",
-                                    )
-                                ]
-                            ),
-                            ft.Column( # Detalhes da tarefa
-                                controls=[
-                                    ft.Text("Data de término:", color=cores["fore1"], weight=ft.FontWeight.BOLD),
-                                    LabelEditavel(
-                                        self.data_termino,
-                                        "date",
-                                        on_submit=lambda value: att_content(term=value)
-                                    )
-                                ]
-                            ),
-                            ft.Column( # Detalhes da tarefa
-                                controls=[
-                                    ft.Text("Prioridade:", color=cores["fore1"], weight=ft.FontWeight.BOLD),
-                                    LabelEditavel(
-                                        self.prioridade,
-                                        "int",
-                                        on_submit=lambda value: att_content(prio=value)
-                                    )
-                                ]
-                            ),
-                            ft.Column( # Detalhes da tarefa
-                                controls=[
-                                    ft.Text("Categoria:", color=cores["fore1"], weight=ft.FontWeight.BOLD),
-                                    LabelEditavel(
-                                        self.categoria,
-                                        "str",
-                                        on_submit=lambda value: att_content(cat=value)
-                                    )
-                                ]
-                            )
-                        ],
-                        expand=True
-                    ),
-                    bgcolor=cores["bg2"],
-                    shadow=ft.BoxShadow(blur_radius=4, color=ft.Colors.BLACK, offset=ft.Offset(-4, 5)),
-                    border_radius=10,
-                    padding=10
-                ),
-                ft.Container( # Parte da direita
-                    content=ft.Column(
-                        controls=[
-                            LabelEditavel( # Titulo
-                                self.titulo,
-                                "str",
-                                scale=4,
-                                on_submit=lambda value: att_content(titulo=value)
-                            ),
-                            ft.Column( # Coluna para descrição
-                                controls=[
-                                    ft.Text("Descrição:", size=25, color=cores["fore1"]),
-                                    ft.Container(
-                                        bgcolor=cores["bg1"],
-                                        expand=True,
-                                        width=float("inf"),
-                                        content=LabelEditavel(
-                                            self.descricao,
-                                            "str",
-                                            on_submit=lambda value: att_content(desc=value)
-                                        ),
+                                    ft.Column( # Detalhes da tarefa
+                                        controls=[
+                                            ft.Text("Data de Criação:", color=cores["fore1"], weight=ft.FontWeight.BOLD),
+                                            LabelEditavel(
+                                                self.data_criacao,
+                                                "date",
+                                            )
+                                        ]
+                                    ),
+                                    ft.Column( # Detalhes da tarefa
+                                        controls=[
+                                            ft.Text("Data de término:", color=cores["fore1"], weight=ft.FontWeight.BOLD),
+                                            LabelEditavel(
+                                                self.data_termino,
+                                                "date",
+                                                on_submit=lambda value: att_content(term=value)
+                                            )
+                                        ]
+                                    ),
+                                    ft.Column( # Detalhes da tarefa
+                                        controls=[
+                                            ft.Text("Prioridade:", color=cores["fore1"], weight=ft.FontWeight.BOLD),
+                                            LabelEditavel(
+                                                self.prioridade,
+                                                "int",
+                                                on_submit=lambda value: att_content(prio=value)
+                                            )
+                                        ]
+                                    ),
+                                    ft.Column( # Detalhes da tarefa
+                                        controls=[
+                                            ft.Text("Categoria:", color=cores["fore1"], weight=ft.FontWeight.BOLD),
+                                            LabelEditavel(
+                                                self.categoria,
+                                                "str",
+                                                on_submit=lambda value: att_content(cat=value)
+                                            )
+                                        ]
                                     )
                                 ],
                                 expand=True
                             ),
-                            ft.Row( # Row para os botões
-                                alignment=ft.MainAxisAlignment.END,
-                                spacing=30,
+                            bgcolor=cores["bg2"],
+                            shadow=ft.BoxShadow(blur_radius=4, color=ft.Colors.BLACK, offset=ft.Offset(-4, 5)),
+                            border_radius=10,
+                            padding=10
+                        ),
+                        ft.Container( # Parte da direita
+                            content=ft.Column(
                                 controls=[
-                                    ft.Button(
-                                        "Excluir",
-                                        bgcolor=cores["fore2"],
-                                        color=cores["fore1"],
-                                        on_click=self.rm_fn
+                                    LabelEditavel( # Titulo
+                                        self.titulo,
+                                        "str",
+                                        scale=4,
+                                        on_submit=lambda value: att_content(titulo=value)
                                     ),
-                                    ft.Button(
-                                        "Salvar",
-                                        bgcolor=cores["fore2"], 
-                                        color=cores["fore1"],
-                                        on_click=self.save_fn
+                                    ft.Column( # Coluna para descrição
+                                        controls=[
+                                            ft.Text("Descrição:", size=25, color=cores["fore1"]),
+                                            ft.Container(
+                                                bgcolor=cores["bg1"],
+                                                expand=True,
+                                                width=float("inf"),
+                                                content=LabelEditavel(
+                                                    self.descricao,
+                                                    "str",
+                                                    on_submit=lambda value: att_content(desc=value)
+                                                ),
+                                            )
+                                        ],
+                                        expand=True
+                                    ),
+                                    ft.Row( # Row para os botões
+                                        alignment=ft.MainAxisAlignment.END,
+                                        spacing=30,
+                                        controls=[
+                                            ft.Button(
+                                                "Excluir",
+                                                bgcolor=cores["fore2"],
+                                                color=cores["fore1"],
+                                                on_click=self.rm_fn
+                                            ),
+                                            ft.Button(
+                                                "Salvar",
+                                                bgcolor=cores["fore2"], 
+                                                color=cores["fore1"],
+                                                on_click=self.save_fn
+                                            )
+                                        ]
                                     )
-                                ]
-                            )
-                        ],
-                        spacing=40,
-                        expand=True
-                    ),
-                    bgcolor=cores["bg2"],
-                    shadow=ft.BoxShadow(blur_radius=4, color=ft.Colors.BLACK, offset=ft.Offset(-4, 5)),
-                    expand=True,
-                    border_radius=10,
-                    padding=10
-                )
-            ],
-            alignment=ft.MainAxisAlignment.SPACE_AROUND,
-            spacing=20
+                                ],
+                                spacing=40,
+                                expand=True
+                            ),
+                            bgcolor=cores["bg2"],
+                            shadow=ft.BoxShadow(blur_radius=4, color=ft.Colors.BLACK, offset=ft.Offset(-4, 5)),
+                            expand=True,
+                            border_radius=10,
+                            padding=10
+                        )
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                    spacing=20
+                ),
+                ft.IconButton(
+                    icon=ft.Icons.EXIT_TO_APP,
+                    icon_color=cores["fore2"],
+                    top=10,
+                    right=10,
+                    on_click=lambda e: sair()
+                ),
+            ]
         )
 
 class LabelEditavel(ft.Container):
@@ -408,9 +423,11 @@ class LabelEditavel(ft.Container):
         self.update()
 
 class BotaoPagina(ft.Container):
-    def __init__(self, fn, titulo):
+    def __init__(self, fn, titulo, id, left_menu):
         super().__init__()
         self.on_click = fn
+        self.id = id
+        self.menu = left_menu
 
         self.bg_color = "#00000000"
         self.width = float("inf")
@@ -418,12 +435,36 @@ class BotaoPagina(ft.Container):
         self.border_radius = 5
         self.margin = 10
 
-        self.content = ft.Text(titulo)
+
+        self.content = ft.Row(
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            controls=[
+                ft.Text(titulo)
+            ]
+        )
 
         def on_hover(e):
-            self.bgcolor = cores["bg_tarefa"] if e.data == "true" else "#00000000"
+            hovering = True if e.data == "true" else False
+
+            if hovering:
+                self.bgcolor = cores["bg_tarefa"]
+                self.content.controls.append(
+                    ft.IconButton(
+                        icon=ft.Icons.CLOSE,
+                        on_click=lambda e: self.delete(self.id)
+                    )
+                )
+            else:
+                self.bgcolor ="#00000000"
+                self.content.controls.pop()
+
             self.update()
-            
+
         self.on_hover = on_hover
 
+    def delete(self, id):
+        db.delete_pagina(id)
+
+        self.menu.att_paginas()
+        
 

@@ -73,7 +73,7 @@ def add_tarefa(titulo, data_cri, data_term, id_pag, descricao='', categoria='', 
 def delete_pagina(id):
     conn = sql.connect("todo_app.db")
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM paginas WHERE id_pagina = (?)", (id,))
+    cursor.execute("DELETE FROM paginas WHERE id_pagina = ?", (id,))
     conn.commit()
     conn.close()
 def delete_tarefa(id):

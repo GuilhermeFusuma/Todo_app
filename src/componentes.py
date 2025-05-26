@@ -88,6 +88,7 @@ class ContainerTarefas(ft.Container):
                     tarefa['data_de_criacao'],
                     self.pai,
                     self,
+                    tarefa["finalizado"],
                     desc=tarefa['descricao'],
                     categoria=tarefa['categoria'],
                     prioridade=tarefa['prioridade'],
@@ -116,7 +117,7 @@ class ContainerTarefas(ft.Container):
         self.update()
 
 class Tarefa(ft.Container):
-    def __init__(self, id_tarefa, id_pagina, titulo, data_cri, main_page, container_tarefas, desc="", categoria="", prioridade=0, data_term=""):
+    def __init__(self, id_tarefa, id_pagina, titulo, data_cri, main_page, container_tarefas, finalizado, desc="", categoria="", prioridade=0, data_term=""):
         super().__init__()
         self.id = id_tarefa
         self.id_pagina = id_pagina
@@ -124,6 +125,7 @@ class Tarefa(ft.Container):
         self.desc = desc
         self.categoria = categoria
         self.prioridade = prioridade
+        self.finalizado = finalizado
         self.data_criacao = data_cri
         self.data_termino = data_term
 
@@ -182,7 +184,11 @@ class Tarefa(ft.Container):
         # Conteudo
         self.content = ft.Row(
             controls=[
-                ft.Checkbox(label=self.titulo)
+                ft.Checkbox(
+                    label=self.titulo,
+                    on_change=lambda e: db.check_tarefa(self.id),
+                    value=True if self.finalizado else False
+                )
             ],
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN
         )

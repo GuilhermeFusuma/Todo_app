@@ -75,24 +75,35 @@ class LeftMenu(ft.Container):
             label="Título",
         )
 
+        def fechar():
+            main_page.content.controls.remove(container_criar)
+            main_page.update()
+
         container_criar = ft.Container(
-            bgcolor=cores["bg2"],
-            padding=40,
-            width= 300,
-            height=180,
-            border_radius=10,
-            shadow=ft.BoxShadow(blur_radius=4, color=ft.Colors.BLACK, offset=ft.Offset(-4, 4)),
-            content=ft.Column(
-                controls=[
-                    campo_texto,
-                    ft.Button(
-                        text="Criar página",
-                        bgcolor=cores["fore2"],
-                        color=cores["fore1"],
-                        on_click=lambda e: verificar(campo_texto.value)
-                    )
-                ],
-                alignment=ft.MainAxisAlignment.END
+            bgcolor="#80000000",
+            expand=True,
+            alignment=ft.alignment.center,
+            on_click=lambda e: fechar(),
+            content=ft.Container(
+                bgcolor=cores["bg2"],
+                padding=40,
+                width= 300,
+                height=180,
+                border_radius=10,
+                shadow=ft.BoxShadow(blur_radius=4, color=ft.Colors.BLACK, offset=ft.Offset(-4, 4)),
+                on_click=lambda e: None,
+                content=ft.Column(
+                    controls=[
+                        campo_texto,
+                        ft.Button(
+                            text="Criar página",
+                            bgcolor=cores["fore2"],
+                            color=cores["fore1"],
+                            on_click=lambda e: verificar(campo_texto.value)
+                        )
+                    ],
+                    alignment=ft.MainAxisAlignment.END
+                )
             )
         )
 
@@ -301,8 +312,12 @@ class Main_Page(ft.Container):
             hint_text="--/--/----",
         )
 
+        def fechar():
+            self.conteudo.controls.pop(1)
+            self.update()
+
         # Verifica os dados
-        def verificar(e):
+        def verificar():
             titulo_valido = False
             data_valido = False
 
@@ -333,32 +348,38 @@ class Main_Page(ft.Container):
                 titulo.focus()
 
         container_criar = ft.Container(
-            bgcolor=cores["bg2"],
-            padding=15,
-            border_radius=20,
-            shadow=ft.BoxShadow(blur_radius=7, color=ft.Colors.BLACK, offset=ft.Offset(-2.0, 2.0)),
-            content=ft.Column(
-                controls=[
-                    titulo,
-                    data_termino,
-                    ft.Button(
-                        text="Criar tarefa",
-                        on_click=verificar,
-                        bgcolor=cores["fore2"],
-                        color=cores["fore1"],
-                    )
-                ],
-                height=300,
-                width=270,
-                horizontal_alignment=ft.CrossAxisAlignment.END,
-                alignment=ft.MainAxisAlignment.SPACE_AROUND
+            expand=True,
+            bgcolor= "#80000000",
+            alignment=ft.alignment.center,
+            on_click=lambda e: fechar(),
+            content=ft.Container(
+                bgcolor=cores["bg2"],
+                padding=15,
+                border_radius=20,
+                shadow=ft.BoxShadow(blur_radius=7, color=ft.Colors.BLACK, offset=ft.Offset(-2.0, 2.0)),
+                on_click=lambda e: None,
+                content=ft.Column(
+                    controls=[
+                        titulo,
+                        data_termino,
+                        ft.Button(
+                            text="Criar tarefa",
+                            on_click=lambda e: verificar(),
+                            bgcolor=cores["fore2"],
+                            color=cores["fore1"],
+                        )
+                    ],
+                    height=300,
+                    width=270,
+                    horizontal_alignment=ft.CrossAxisAlignment.END,
+                    alignment=ft.MainAxisAlignment.SPACE_AROUND
+                )
             )
         )
 
         if len(self.conteudo.controls) < 2:
             self.conteudo.controls.append(container_criar)
         self.update()
-
 
     def consultar_tarefas(self):
         tarefas = db.tarefas_por_pagina(self.id)
@@ -415,7 +436,7 @@ class TodoApp(ft.Row):
         self.controls = [
             self.left_menu,
             self.paginas[self.ids[0]],
-            self.chat_menu
+            # self.chat_menu
         ]
 
     def get_paginas(self):

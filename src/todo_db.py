@@ -38,7 +38,7 @@ if not len(result):
     hoje_formatado = hoje.strftime("%d/%m/%Y")
 
     cursor.execute("""
-    INSERT INTO paginas (titulo, tipo) VALUES ("Lista de tarefas (teste base)", "tarefa")
+    INSERT INTO paginas (titulo, tipo) VALUES ("Lista de tarefas", "tarefa")
     """)
     cursor.execute("""
 SELECT id_pagina FROM paginas
@@ -187,10 +187,14 @@ def edit_tarefa(id, titulo, descricao, prioridade, data_term):
     conn.commit()
     conn.close()
 
-def check_tarefa(id, value: bool = True):
+def check_tarefa(id):
     conn = sql.connect("todo_app.db")
     cursor = conn.cursor()
 
-    check = 1 if value else 0
+    cursor.execute("SELECT finalizado FROM tarefas WHERE id_tarefa = ?", (id,))
+    num = cursor.fetchall()[0][0]
+    check = abs(num - 1)
+
     cursor.execute("UPDATE tarefas SET finalizado = ? WHERE id_tarefa = ?", (check, id))
+    conn.commit()
     conn.close()

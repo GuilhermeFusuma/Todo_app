@@ -65,6 +65,7 @@ class ContainerTarefas(ft.Container):
         self.aberto = False
         self.arrow = ArrowButton(self.expandir)
         self.arrow.rotate = 0
+        self.animate = ft.Animation(duration=150, curve=ft.AnimationCurve.EASE_IN)
 
         # Cabeçalho com título e botão de expandir
         self.header = ft.Container(

@@ -4,7 +4,7 @@ from componentes import *
 import todo_db as db
 
 class LeftMenu(ft.Container):
-    def __init__(self, page, app: ft.Row):
+    def __init__(self, app: ft.Row):
         super().__init__()
         self.app = app
         # lista com tuplas contendo o id e o título da página    
@@ -31,8 +31,8 @@ class LeftMenu(ft.Container):
             controls=[BotaoPagina(lambda e, id=pagina["id"]: self.app.switch_page(id), pagina["titulo"], pagina["id"], self) for pagina in self.paginas]
         )
 
-        # Cria as páginas
-        self.content= ft.Column(
+        # Conteúdo do menu
+        self.conteudo = ft.Column(
             controls=[
                 ft.Row(
                     controls=[
@@ -60,6 +60,8 @@ class LeftMenu(ft.Container):
                 )
             ]
         )
+        
+        self.content = self.conteudo
 
     def add_page(self):
         main_page = self.app.controls[1] #main page para adicionar a tela de criação
@@ -144,26 +146,14 @@ class LeftMenu(ft.Container):
         elif self.mini: # Caso esteja minimizada
             self.width = 300
             self.arrow.rotate = 3.14
-            self.content= ft.Column(
-                controls=[
-                    ft.Row(
-                        controls=[
-                            ft.Text("Todo App", weight="bold", size=35, color=cores["fore1"]),
-                            self.arrow
-                        ],
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                        vertical_alignment= ft.CrossAxisAlignment.CENTER,
-                    ),
-                    self.pages
-                ]
-            )
+            self.content= self.conteudo
 
             self.mini = False
 
         self.app.update()
 
 class Chat_Menu(ft.Container):
-    def __init__(self, page, app: ft.Row):
+    def __init__(self, app: ft.Row):
         super().__init__()
         self.app = app
         self.padding = 5
@@ -257,11 +247,13 @@ class Chat(ft.Container):
         self.campo_texto.focus()
 
 class Main_Page(ft.Container):
-    def __init__(self, titulo, page, app: ft.Row, id_pagina):
+    def __init__(self, titulo, app: ft.Row, id_pagina):
         super().__init__()
+        self.titulo = titulo
         self.expand = True
         self.padding = 20
         self.bgcolor = cores["bg1"]
+        self.app = app
 
         self.id = id_pagina
         self.datas = []
@@ -273,6 +265,13 @@ class Main_Page(ft.Container):
             scroll="auto"
         )
 
+        def editar_titulo(novo_titulo):
+            self.titulo = novo_titulo
+            db.edit_pagina(self.id, novo_titulo, "tarefa")
+
+            self.update() # Atualiza a página
+            self.app.left_menu.att_paginas()
+
         self.conteudo = ft.Stack(
             controls=[
                 ft.Column(
@@ -280,7 +279,7 @@ class Main_Page(ft.Container):
 
                         ft.Row( # Header da página
                             controls=[
-                                ft.Text(titulo, size = 35),
+                                LabelEditavel(self.titulo, "str", scale=3.5, on_submit=lambda value: editar_titulo(value)),
                                 ft.FloatingActionButton(
                                     bgcolor=cores["fore2"],
                                     foreground_color=cores["fore1"],
@@ -342,10 +341,10 @@ class Main_Page(ft.Container):
                 self.update()
 
                 self.consultar_tarefas()
-            elif titulo_valido:
-                data_termino.focus()
-            elif data_valido:
+            elif not titulo_valido:
                 titulo.focus()
+            elif not data_valido:
+                data_termino.focus()
 
         container_criar = ft.Container(
             expand=True,
@@ -426,8 +425,8 @@ class TodoApp(ft.Row):
         self.get_paginas()
 
         # janelas
-        self.left_menu = LeftMenu(page, self)
-        self.chat_menu = Chat_Menu(page, self)
+        self.left_menu = LeftMenu(self)
+        self.chat_menu = Chat_Menu(self)
 
         #config
         self.spacing = 0
@@ -448,8 +447,7 @@ class TodoApp(ft.Row):
             self.paginas.setdefault(
                 pagina["id"], 
                 Main_Page(
-                    pagina["titulo"], 
-                    self.page, 
+                    pagina["titulo"],
                     self, 
                     pagina["id"]
                 )

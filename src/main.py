@@ -1,6 +1,4 @@
 import flet as ft
-from cores import cores
-import todo_db as bd
 from main_page import TodoApp
 
 def main(page: ft.Page):

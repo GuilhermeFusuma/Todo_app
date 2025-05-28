@@ -2,6 +2,7 @@ import flet as ft
 from cores import cores
 from componentes import *
 import todo_db as db
+from datetime import datetime, timedelta
 
 class LeftMenu(ft.Container):
     def __init__(self, app: ft.Row):
@@ -306,9 +307,34 @@ class Main_Page(ft.Container):
         titulo = ft.TextField(
             label="Titulo",
         )
-        data_termino = ft.TextField(
-            label="Data de término",
-            hint_text="--/--/----",
+
+        data_escolhida = ft.TextField(
+            datetime.now().date().strftime("%d/%m/%Y"),
+            read_only=True,
+            expand=True
+        )
+
+        def change_data(e):
+            data_escolhida.value = e.control.value.strftime("%d/%m/%Y")
+            container_criar.update()
+
+        data_termino = ft.Row(
+            controls=[
+                data_escolhida,
+                ft.ElevatedButton(
+                    "Data",
+                    icon=ft.Icons.CALENDAR_MONTH,
+                    bgcolor=cores["fore2"],
+                    color=cores["fore1"],
+                    on_click=lambda e: self.app.page.open(
+                        ft.DatePicker(
+                            first_date=datetime.now().date(),
+                            last_date=datetime.now().date() + timedelta(days=365),
+                            on_change=change_data
+                        )
+                    )
+                )
+            ]
         )
 
         def fechar():
@@ -318,22 +344,15 @@ class Main_Page(ft.Container):
         # Verifica os dados
         def verificar():
             titulo_valido = False
-            data_valido = False
 
             if len(titulo.value.strip()) > 0: # verifica se tem texto no campo
                 titulo_valido = True
-            
-            try: # verifica se a data é válida
-                datetime.strptime(data_termino.value,"%d/%m/%Y")
-                data_valido = True
-            except ValueError:
-                data_valido = False
 
-            if titulo_valido and data_valido: # Se ambos os campos forem válidos, adiciona no banco de dados e atualiza a página
+            if titulo_valido: # Se ambos os campos forem válidos, adiciona no banco de dados e atualiza a página
                 db.add_tarefa(
                     titulo.value,
                     datetime.now().date().strftime("%d/%m/%Y"),
-                    data_termino.value,
+                    data_termino.controls[0].value,
                     self.id
                 )
 
@@ -343,7 +362,7 @@ class Main_Page(ft.Container):
                 self.consultar_tarefas()
             elif not titulo_valido:
                 titulo.focus()
-            elif not data_valido:
+            elif not data_termino.controls[0].value:
                 data_termino.focus()
 
         container_criar = ft.Container(
